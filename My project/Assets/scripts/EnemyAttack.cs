@@ -3,145 +3,134 @@ using UnityEngine.AI;
 
 public class EnemyAttack : MonoBehaviour
 {
-    public NavMeshAgent agent;
-    public Transform player;
-    public LayerMask whatIsGround, whatIsPlayer;
-    public float health;
+    public Transform Player;
+    public float detectionRange = 10f;
+    public float attackRange = 2f;
+    public float attackCooldown = 1.5f;
+    public int attackDamage = 10;
 
-    // Patrolling
-    public Vector3 walkPoint;
-    bool walkPointSet;
-    public float walkPointRange;
+    public GameObject weapon; // Reference to the weapon GameObject
+    public Transform attackPoint; // Point from which the weapon will deal damage
+    public float attackRadius = 1.0f; // Radius for attack hit detection
 
-    // Attacking
-    public float timeBetweenAttacks;
-    bool alreadyAttacked;
-    public GameObject projectile;
+    private NavMeshAgent agent;
+    private Animator animator;
+    private float attackTimer;
 
-    // States
-    public float sightRange, attackRange;
-    public bool playerInSightRange, playerInAttackRange;
-
-    private void Start()
+    void Start()
     {
-        GameObject playerObject = GameObject.FindWithTag("enemy");
-        if (playerObject != null)
-        {
-            player = playerObject.transform;
-        }
-        else
-        {
-            Debug.LogError("No GameObject with the tag 'enemy' found at Start!");
-        }
-    }
-
-    private void Awake()
-    {
-        // Find the player by the "enemy" tag
-        GameObject playerObject = GameObject.FindWithTag("enemy");
-        if (playerObject != null)
-        {
-            player = playerObject.transform;
-        }
-        else
-        {
-            Debug.LogError("No GameObject with the tag 'enemy' found! Make sure your player GameObject is tagged correctly.");
-        }
-
-        // Initialize NavMeshAgent
         agent = GetComponent<NavMeshAgent>();
-        if (agent == null)
+        animator = GetComponent<Animator>();
+
+        // Ensure weapon reference is set
+        if (weapon == null)
         {
-            Debug.LogError("NavMeshAgent component is missing on this GameObject!");
+            Debug.LogError("Weapon is not assigned! Attach a weapon GameObject to the Enemy.");
         }
     }
 
-    private void Update()
+    void Update()
     {
-        // Check for sight and attack range
-        playerInSightRange = Physics.CheckSphere(transform.position, sightRange, whatIsPlayer);
-        playerInAttackRange = Physics.CheckSphere(transform.position, attackRange, whatIsPlayer);
-
-        if (!playerInSightRange && !playerInAttackRange) Patroling();
-        if (playerInSightRange && !playerInAttackRange) ChasePlayer();
-        if (playerInAttackRange && playerInSightRange) AttackPlayer();
-    }
-
-    private void Patroling()
-    {
-        if (!walkPointSet) SearchWalkPoint();
-
-        if (walkPointSet)
-            agent.SetDestination(walkPoint);
-
-        Vector3 distanceToWalkPoint = transform.position - walkPoint;
-
-        // Walkpoint reached
-        if (distanceToWalkPoint.magnitude < 1f)
-            walkPointSet = false;
-    }
-
-    private void SearchWalkPoint()
-    {
-        // Calculate random point in range
-        float randomZ = Random.Range(-walkPointRange, walkPointRange);
-        float randomX = Random.Range(-walkPointRange, walkPointRange);
-
-        walkPoint = new Vector3(transform.position.x + randomX, transform.position.y, transform.position.z + randomZ);
-
-        if (Physics.Raycast(walkPoint, -transform.up, 2f, whatIsGround))
-            walkPointSet = true;
-    }
-
-    private void ChasePlayer()
-    {
-        if (player != null)
+        if (Player == null)
         {
-            agent.SetDestination(player.position);
+            Debug.LogError("Player reference is missing! Ensure it is assigned.");
+            return;
+        }
+
+        float distanceToPlayer = Vector3.Distance(Player.position, transform.position);
+
+        if (distanceToPlayer <= attackRange)
+        {
+            // Attack if within attack range
+            AttackPlayer();
+        }
+        else if (distanceToPlayer <= detectionRange)
+        {
+            // Walk toward the player if within detection range
+            ChasePlayer();
+        }
+        else
+        {
+            // Idle when out of detection range
+            Idle();
         }
     }
 
-    private void AttackPlayer()
+    void ChasePlayer()
     {
-        // Make sure enemy doesn't move
-        agent.SetDestination(transform.position);
-
-        transform.LookAt(player);
-
-        if (!alreadyAttacked)
+        if (agent.isOnNavMesh)
         {
-            // Attack code
-            Rigidbody rb = Instantiate(projectile, transform.position, Quaternion.identity).GetComponent<Rigidbody>();
-            rb.AddForce(transform.forward * 32f, ForceMode.Impulse);
-            rb.AddForce(transform.up * 8f, ForceMode.Impulse);
-
-            alreadyAttacked = true;
-            Invoke(nameof(ResetAttack), timeBetweenAttacks);
+            agent.SetDestination(Player.position);
+            animator.SetBool("isWalking", true);
+            animator.SetBool("isAttacking", false);
         }
     }
 
-    private void ResetAttack()
+    void AttackPlayer()
     {
-        alreadyAttacked = false;
+        if (!agent.isOnNavMesh)
+        {
+            Debug.LogWarning("Agent is not on a valid NavMesh!");
+            return;
+        }
+
+        // Stop movement when in attack range
+        agent.ResetPath();
+        animator.SetBool("isWalking", false);
+
+        if (attackTimer <= 0)
+        {
+            // Only trigger attack if still within attack range
+            float distanceToPlayer = Vector3.Distance(Player.position, transform.position);
+            if (distanceToPlayer <= attackRange)
+            {
+                animator.SetTrigger("isAttacking");
+                attackTimer = attackCooldown;
+
+                // Deal damage to the player
+                DealDamage();
+            }
+        }
+
+        // Decrease cooldown timer
+        attackTimer -= Time.deltaTime;
     }
 
-    public void TakeDamage(int damage)
+    void Idle()
     {
-        health -= damage;
-
-        if (health <= 0) Invoke(nameof(DestroyEnemy), 0.5f);
+        animator.SetBool("isWalking", false);
+        animator.SetBool("isAttacking", false);
     }
 
-    private void DestroyEnemy()
+    void DealDamage()
     {
-        Destroy(gameObject);
+        // Check if player is still in range and deal damage
+        float distanceToPlayer = Vector3.Distance(Player.position, transform.position);
+        if (distanceToPlayer <= attackRange)
+        {
+            Collider[] hitObjects = Physics.OverlapSphere(attackPoint.position, attackRadius);
+            foreach (Collider hit in hitObjects)
+            {
+                if (hit.CompareTag("Player"))
+                {
+                    PlayerHealth playerHealth = hit.GetComponent<PlayerHealth>();
+                    if (playerHealth != null)
+                    {
+                        playerHealth.TakeDamage(attackDamage);
+                        Debug.Log("Player hit by weapon!");
+                    }
+                }
+            }
+        }
     }
 
-    private void OnDrawGizmosSelected()
+    void OnDrawGizmosSelected()
     {
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position, attackRange);
-        Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, sightRange);
+        // Visualize attack range in Scene view
+        if (attackPoint != null)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(attackPoint.position, attackRadius);
+        }
     }
 }
