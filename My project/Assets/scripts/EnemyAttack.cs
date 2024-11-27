@@ -9,102 +9,148 @@ public class EnemyAttack : MonoBehaviour
     public float attackCooldown = 1.5f;
     public int attackDamage = 10;
 
-    public GameObject weapon; // Reference to the weapon GameObject
-    public Transform attackPoint; // Point from which the weapon will deal damage
-    public float attackRadius = 1.0f; // Radius for attack hit detection
+    public GameObject weapon;
+    public Transform attackPoint;
+    public float attackRadius = 1.0f;
 
     private NavMeshAgent agent;
     private Animator animator;
     private float attackTimer;
+    private bool isAttacking;
+    private bool isIdle;
 
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
 
-        // Ensure weapon reference is set
         if (weapon == null)
         {
             Debug.LogError("Weapon is not assigned! Attach a weapon GameObject to the Enemy.");
+        }
+
+        if (Player == null)
+        {
+            Debug.LogError("Player reference is missing! Ensure it is assigned.");
         }
     }
 
     void Update()
     {
-        if (Player == null)
-        {
-            Debug.LogError("Player reference is missing! Ensure it is assigned.");
-            return;
-        }
+        if (Player == null) return;
 
         float distanceToPlayer = Vector3.Distance(Player.position, transform.position);
 
         if (distanceToPlayer <= attackRange)
         {
-            // Attack if within attack range
             AttackPlayer();
         }
         else if (distanceToPlayer <= detectionRange)
         {
-            // Walk toward the player if within detection range
             ChasePlayer();
         }
         else
         {
-            // Idle when out of detection range
             Idle();
         }
     }
 
     void ChasePlayer()
     {
+        // Reset attack state
+        isAttacking = false;
+        isIdle = false;
+        attackTimer = 0; // Reset attack cooldown
+
         if (agent.isOnNavMesh)
         {
+            agent.isStopped = false;
             agent.SetDestination(Player.position);
+
             animator.SetBool("isWalking", true);
-            animator.SetBool("isAttacking", false);
+            animator.SetBool("isAttacking", false); // Ensure attack animation stops
+            animator.SetBool("isIdle", false); // Ensure attack animation stops
         }
     }
 
     void AttackPlayer()
     {
-        if (!agent.isOnNavMesh)
+        if (!agent.isOnNavMesh) return;
+
+        // Stop moving when attacking
+        agent.isStopped = true;
+        agent.ResetPath();
+
+        // Face the player
+        RotateToFacePlayer();
+
+        // Check if already attacking
+        if (isAttacking && Vector3.Distance(Player.position, transform.position) > attackRange)
         {
-            Debug.LogWarning("Agent is not on a valid NavMesh!");
+            // Stop attacking if player moves out of range
+            StopAttack();
             return;
         }
 
-        // Stop movement when in attack range
-        agent.ResetPath();
-        animator.SetBool("isWalking", false);
+        animator.SetBool("isWalking", false); // Stop walking animation
 
-        if (attackTimer <= 0)
+        // Trigger attack when cooldown is over
+        if (attackTimer <= 0 && !isAttacking)
         {
-            // Only trigger attack if still within attack range
-            float distanceToPlayer = Vector3.Distance(Player.position, transform.position);
-            if (distanceToPlayer <= attackRange)
-            {
-                animator.SetTrigger("isAttacking");
-                attackTimer = attackCooldown;
+            animator.SetTrigger("isAttacking");
+            isAttacking = true;
+            attackTimer = attackCooldown;
 
-                // Deal damage to the player
-                DealDamage();
-            }
+            // Apply damage
+            DealDamage();
         }
 
-        // Decrease cooldown timer
+        // Cooldown timer
         attackTimer -= Time.deltaTime;
+
+        // Reset attacking if the player moves away
+        if (Vector3.Distance(Player.position, transform.position) > attackRange)
+        {
+            StopAttack();
+        }
+    }
+
+    void StopAttack()
+    {
+        isAttacking = false; // Reset attacking state
+        animator.SetBool("isAttacking", false); // Ensure attack animation stops
     }
 
     void Idle()
     {
+        // Reset attack state
+        isAttacking = false;
+        attackTimer = 0; // Reset cooldown
+
+        if (agent.isOnNavMesh)
+        {
+            agent.isStopped = true;
+            agent.ResetPath();
+        }
+
         animator.SetBool("isWalking", false);
         animator.SetBool("isAttacking", false);
     }
 
+    void RotateToFacePlayer()
+    {
+        Vector3 directionToPlayer = (Player.position - transform.position).normalized;
+        directionToPlayer.y = 0; // Keep rotation horizontal
+        if (directionToPlayer != Vector3.zero)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(directionToPlayer);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 5f);
+        }
+    }
+
     void DealDamage()
     {
-        // Check if player is still in range and deal damage
+        // Check if the player is still in range before dealing damage
         float distanceToPlayer = Vector3.Distance(Player.position, transform.position);
         if (distanceToPlayer <= attackRange)
         {
@@ -124,9 +170,13 @@ public class EnemyAttack : MonoBehaviour
         }
     }
 
+    public void OnFootstep()
+    {
+       
+    }
+
     void OnDrawGizmosSelected()
     {
-        // Visualize attack range in Scene view
         if (attackPoint != null)
         {
             Gizmos.color = Color.red;
