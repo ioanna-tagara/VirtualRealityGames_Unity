@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.UI;
 
 public class EnemyAttack : MonoBehaviour
 {
@@ -19,8 +20,13 @@ public class EnemyAttack : MonoBehaviour
     private bool isAttacking;
     private bool isIdle;
 
+    public int maxHealth = 100;
+    private int currentHealth;
+
+
     void Start()
     {
+        currentHealth = maxHealth;
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
 
@@ -72,6 +78,18 @@ public class EnemyAttack : MonoBehaviour
             animator.SetBool("isIdle", false); // Ensure attack animation stops
         }
     }
+    public void TakeDamage(int damage)
+    {
+        currentHealth -= damage;
+        currentHealth = Mathf.Max(currentHealth, 0); // Prevent negative health
+        Debug.Log("Enemy took " + damage + " damage. Current health: " + currentHealth);
+
+        if (currentHealth <= 0)
+        {
+            Die();
+        }
+    }
+
 
     void AttackPlayer()
     {
@@ -148,6 +166,7 @@ public class EnemyAttack : MonoBehaviour
         }
     }
 
+
     void DealDamage()
     {
         // Check if the player is still in range before dealing damage
@@ -162,18 +181,33 @@ public class EnemyAttack : MonoBehaviour
                     PlayerHealth playerHealth = hit.GetComponent<PlayerHealth>();
                     if (playerHealth != null)
                     {
-                        playerHealth.TakeDamage(attackDamage);
+                        playerHealth.TakeDamage(attackDamage); // Apply damage to the player
                         Debug.Log("Player hit by weapon!");
+                    }
+                }
+                else if (hit.CompareTag("agent")) // Ensure enemy health updates
+                {
+                    EnemyHealth enemyHealth = hit.GetComponent<EnemyHealth>();
+                    if (enemyHealth != null)
+                    {
+                        enemyHealth.TakeDamage(attackDamage);
+                        Debug.Log("Enemy hit!");
                     }
                 }
             }
         }
     }
-
     public void OnFootstep()
     {
-       
+
     }
+
+    void Die()
+    {
+        Debug.Log("Enemy is dead!");
+        Destroy(gameObject); // Destroy the enemy GameObject on death
+    }
+
 
     void OnDrawGizmosSelected()
     {

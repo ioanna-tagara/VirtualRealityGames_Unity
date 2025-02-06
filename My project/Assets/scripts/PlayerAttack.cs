@@ -4,6 +4,10 @@ public class PlayerAttack : MonoBehaviour
 {
     private Animator animator;
     private bool isAttacking = false;
+    public float attackRange = 2f; // Range of the player's attack
+    public int attackDamage = 10; // Damage dealt by the player
+    public Transform attackPoint; // Point from which the attack is detected
+    public LayerMask enemyLayer; // Layer for enemies
 
     void Start()
     {
@@ -27,18 +31,33 @@ public class PlayerAttack : MonoBehaviour
         // Trigger the attack animation (assuming you have a trigger parameter named "AttackTrigger")
         animator.SetTrigger("AttackTrigger");
 
-        // You can also apply the attack logic here (e.g., damage detection, etc.)
-        // For example:
-        // Detect enemies in range and apply damage to them
+        // Detect enemies in range and apply damage
+        Collider[] hitEnemies = Physics.OverlapSphere(attackPoint.position, attackRange, enemyLayer);
+        foreach (Collider enemy in hitEnemies)
+        {
+            EnemyAttack enemyHealth = enemy.GetComponent<EnemyAttack>();
+            if (enemyHealth != null)
+            {
+                enemyHealth.TakeDamage(attackDamage); // Apply damage to the enemy
+                Debug.Log("Enemy hit by player!");
+            }
+        }
 
-        // After the attack animation is done, reset the attacking state
-        // Assuming the attack animation has a known length, reset after that.
-        // Alternatively, you can listen for the animation end event to reset it.
+        // Reset the attack state after the animation is done
         Invoke("ResetAttack", 1.0f); // Reset after 1 second (assuming the animation duration is 1 second)
     }
 
     void ResetAttack()
     {
         isAttacking = false;
+    }
+
+    void OnDrawGizmosSelected()
+    {
+        if (attackPoint != null)
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(attackPoint.position, attackRange);
+        }
     }
 }
