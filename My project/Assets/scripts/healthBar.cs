@@ -1,35 +1,14 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class healthBar : MonoBehaviour
+public class HealthBar : MonoBehaviour
 {
-    public Slider healthSlider;
-    public Slider easeHealthSlider;
-    public float maxHealth = 100;
-    public float health = 100;
-    private float lerpSpeed = 0.05f;
+    public Slider healthSlider;        // Main health bar (instant)
+    public Slider easeHealthSlider;    // Smooth easing health bar
+    private float lerpSpeed = 5f;      // Speed for smooth effect
 
-    void Start()
-    {
-        health = maxHealth;
-        SetMaxHealth(maxHealth); // Initialize the health bar
-    }
-
-    void Update()
-    {
-        if (healthSlider.value != health)
-        {
-            healthSlider.value = health;
-        }
-
-        if (healthSlider.value != easeHealthSlider.value)
-        {
-            easeHealthSlider.value = Mathf.Lerp(easeHealthSlider.value, health, lerpSpeed);
-        }
-    }
-
+    // Initialize the health bar
     public void SetMaxHealth(float health)
     {
         healthSlider.maxValue = health;
@@ -38,29 +17,21 @@ public class healthBar : MonoBehaviour
         easeHealthSlider.value = health;
     }
 
+    // Update health instantly and smoothly decrease ease bar
     public void SetHealth(float health)
     {
-        this.health = health;
+        healthSlider.value = health; // Instantly update main bar
+        StartCoroutine(SmoothHealthBar(health)); // Smooth effect for ease bar
     }
 
-    public void UpdateHealthBar(float newHealth)
+    // Coroutine to smoothly reduce the eased health bar
+    private IEnumerator SmoothHealthBar(float health)
     {
-        health = newHealth;
-        healthSlider.value = health; // Update main health bar
-    }
-
-
-    public void TakeDamage(float damage)
-    {
-        health -= damage;
-        if (health <= 0)
+        while (easeHealthSlider.value > health) // Only decrease, not increase
         {
-            Die();
+            easeHealthSlider.value = Mathf.Lerp(easeHealthSlider.value, health, Time.deltaTime * lerpSpeed);
+            yield return null;
         }
-    }
-
-    void Die()
-    {
-        Destroy(gameObject);
+        easeHealthSlider.value = health; // Ensure it reaches exact health
     }
 }

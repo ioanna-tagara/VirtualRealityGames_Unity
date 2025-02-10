@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.AI;
-using UnityEngine.UI;
 
 public class EnemyAttack : MonoBehaviour
 {
@@ -22,7 +21,6 @@ public class EnemyAttack : MonoBehaviour
 
     public int maxHealth = 100;
     private int currentHealth;
-
 
     void Start()
     {
@@ -78,6 +76,7 @@ public class EnemyAttack : MonoBehaviour
             animator.SetBool("isIdle", false); // Ensure attack animation stops
         }
     }
+
     public void TakeDamage(int damage)
     {
         currentHealth -= damage;
@@ -89,7 +88,6 @@ public class EnemyAttack : MonoBehaviour
             Die();
         }
     }
-
 
     void AttackPlayer()
     {
@@ -166,7 +164,6 @@ public class EnemyAttack : MonoBehaviour
         }
     }
 
-
     void DealDamage()
     {
         // Check if the player is still in range before dealing damage
@@ -185,21 +182,17 @@ public class EnemyAttack : MonoBehaviour
                         Debug.Log("Player hit by weapon!");
                     }
                 }
-                else if (hit.CompareTag("agent")) // Ensure enemy health updates
+                else if (hit.CompareTag("Enemy") && hit.gameObject != gameObject) // Prevents self-hit
                 {
                     EnemyHealth enemyHealth = hit.GetComponent<EnemyHealth>();
                     if (enemyHealth != null)
                     {
-                        enemyHealth.TakeDamage(attackDamage);
+                        enemyHealth.TakeDamage(attackDamage); // Apply damage to another enemy
                         Debug.Log("Enemy hit!");
                     }
                 }
             }
         }
-    }
-    public void OnFootstep()
-    {
-
     }
 
     void Die()
@@ -207,7 +200,6 @@ public class EnemyAttack : MonoBehaviour
         Debug.Log("Enemy is dead!");
         Destroy(gameObject); // Destroy the enemy GameObject on death
     }
-
 
     void OnDrawGizmosSelected()
     {

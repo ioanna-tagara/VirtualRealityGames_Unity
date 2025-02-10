@@ -22,30 +22,34 @@ public class PlayerAttack : MonoBehaviour
             Attack();
         }
     }
-
     void Attack()
     {
         // Prevent spamming the attack if it's already in progress
         isAttacking = true;
 
-        // Trigger the attack animation (assuming you have a trigger parameter named "AttackTrigger")
+        // Trigger the attack animation
         animator.SetTrigger("AttackTrigger");
 
         // Detect enemies in range and apply damage
         Collider[] hitEnemies = Physics.OverlapSphere(attackPoint.position, attackRange, enemyLayer);
         foreach (Collider enemy in hitEnemies)
         {
-            EnemyAttack enemyHealth = enemy.GetComponent<EnemyAttack>();
-            if (enemyHealth != null)
+            // Ensure we're not hitting ourselves
+            if (enemy.gameObject != gameObject)
             {
-                enemyHealth.TakeDamage(attackDamage); // Apply damage to the enemy
-                Debug.Log("Enemy hit by player!");
+                EnemyHealth enemyHealth = enemy.GetComponent<EnemyHealth>();
+                if (enemyHealth != null)
+                {
+                    enemyHealth.TakeDamage(attackDamage);
+                    Debug.Log("Enemy hit by player!");
+                }
             }
         }
 
-        // Reset the attack state after the animation is done
-        Invoke("ResetAttack", 1.0f); // Reset after 1 second (assuming the animation duration is 1 second)
+        // Reset attack after animation
+        Invoke("ResetAttack", 1.0f);
     }
+
 
     void ResetAttack()
     {
