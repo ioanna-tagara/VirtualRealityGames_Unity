@@ -44,4 +44,14 @@ public class PlayerHealth : MonoBehaviour
         Debug.Log("Player is dead! Reloading MainMenu...");
         SceneManager.LoadScene("MainMenu");
     }
+    public void Heal(int amount)
+    {
+        currentHealth += amount;
+        currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
+        if (healthBar != null)
+        {
+            healthBar.SetHealth(currentHealth); // Update health bar
+        }
+        Debug.Log("Player healed! Current Health: " + currentHealth);
+    }
 }
