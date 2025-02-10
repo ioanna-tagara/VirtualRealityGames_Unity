@@ -3,6 +3,9 @@ using UnityEngine.SceneManagement;
 
 public class LoadGame : MonoBehaviour
 {
+    public GameObject mainMenu;
+    public GameObject settingsMenu;
+
     public void PlayGame()
     { 
         SceneManager.LoadScene(1);
@@ -25,8 +28,14 @@ public class LoadGame : MonoBehaviour
 
     public void Settings()
     {
-        SceneManager.LoadScene(2);
+       mainMenu.SetActive(false);
+       settingsMenu.SetActive(true);
+    }
 
+    public void BacktoMenu()
+    {
+        settingsMenu.SetActive(false);
+        mainMenu.SetActive(true);
     }
 
 }

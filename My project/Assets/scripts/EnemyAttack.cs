@@ -1,5 +1,6 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.UIElements;
 
 public class EnemyAttack : MonoBehaviour
 {
@@ -7,8 +8,7 @@ public class EnemyAttack : MonoBehaviour
     public float detectionRange = 10f;
     public float attackRange = 2f;
     public float attackCooldown = 1.5f;
-    public int attackDamage = 10;
-
+    public int attackDamage;
     public GameObject weapon;
     public Transform attackPoint;
     public float attackRadius = 1.0f;
@@ -24,6 +24,8 @@ public class EnemyAttack : MonoBehaviour
 
     void Start()
     {
+        attackDamage = PlayerPrefs.GetInt("EnemyDamage",10); //set damage by selected difficulty or default (10 for medium diff) otherwise
+       
         currentHealth = maxHealth;
         agent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
@@ -79,10 +81,26 @@ public class EnemyAttack : MonoBehaviour
 
     public void TakeDamage(int damage)
     {
-        currentHealth -= damage;
-        currentHealth = Mathf.Max(currentHealth, 0); // Prevent negative health
-        Debug.Log("Enemy took " + damage + " damage. Current health: " + currentHealth);
+        if (currentHealth <= 0) return; // Αν ο εχθρός είναι ήδη νεκρός, μην κάνεις τίποτα.
 
+        // Μείωσε το health
+        currentHealth -= damage;
+        currentHealth = Mathf.Max(currentHealth, 0); // Αποφυγή αρνητικής τιμής.
+
+        Debug.Log($"Enemy took {damage} damage. Current health: {currentHealth}");
+
+        // Ενεργοποίηση του Hit animation
+        if (animator != null)
+        {
+            animator.SetTrigger("HitTrigger");
+            Debug.Log("Hit animation triggered.");
+        }
+        else
+        {
+            Debug.LogError("Animator not assigned!");
+        }
+
+        // Έλεγχος αν πέθανε
         if (currentHealth <= 0)
         {
             Die();

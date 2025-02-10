@@ -1,15 +1,19 @@
+﻿using System.Collections;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.SceneManagement;
 
 public class PlayerHealth : MonoBehaviour
 {
     public int maxHealth = 100;
-    private int currentHealth;
+    public int currentHealth;
     public HealthBar healthBar; // Reference to the health bar
+    private Animator animator;
 
     void Start()
     {
         currentHealth = maxHealth;
+        animator = GetComponent<Animator>();
 
         if (healthBar != null)
         {
@@ -20,6 +24,8 @@ public class PlayerHealth : MonoBehaviour
             Debug.LogError("HealthBar is not assigned in PlayerHealth script!");
         }
     }
+
+    public int getCurrentHealth(int currenthealth) { return currentHealth; }
 
     public void TakeDamage(int damage)
     {
@@ -39,11 +45,57 @@ public class PlayerHealth : MonoBehaviour
         }
     }
 
+
+
+    //palio die
+    /* void Die()
+     {
+         animator.SetTrigger("DieTrigger");
+         GetComponent<Collider>().enabled = false;
+         GetComponent<NavMeshAgent>().enabled = false;
+
+         Debug.Log("Player is dead! Reloading MainMenu...");
+         SceneManager.LoadScene("MainMenu");
+     } */
+
     void Die()
     {
+        // Παίξε το animation θανάτου
+        animator.SetTrigger("DieTrigger");
+
+        // Απενεργοποίησε το Collider και τον NavMeshAgent για να αποτρέψεις την αλληλεπίδραση
+        if (GetComponent<Collider>() != null)
+        {
+            GetComponent<Collider>().enabled = false;
+        }
+
+        if (GetComponent<NavMeshAgent>() != null)
+        {
+            GetComponent<NavMeshAgent>().enabled = false;
+        }
+
+        // Αν υπάρχει CharacterController, απενεργοποίησέ τον
+        CharacterController characterController = GetComponent<CharacterController>();
+        if (characterController != null)
+        {
+            characterController.enabled = false;
+        }
+
         Debug.Log("Player is dead! Reloading MainMenu...");
-        SceneManager.LoadScene("MainMenu");
+
+        // Καθυστέρηση για τη μετάβαση στο MainMenu ώστε να ολοκληρωθεί το animation
+        StartCoroutine(ReloadMainMenu());
     }
+
+    IEnumerator ReloadMainMenu()
+    {
+        // Δώσε χρόνο στο animation να ολοκληρωθεί (5 δευτερόλεπτα)
+        yield return new WaitForSeconds(5f);
+
+        // Φόρτωσε τη σκηνή MainMenu
+        UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
+    }
+
     public void Heal(int amount)
     {
         currentHealth += amount;

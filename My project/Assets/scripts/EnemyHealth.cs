@@ -1,10 +1,13 @@
 using UnityEngine;
+using UnityEngine.AI;
 
 public class EnemyHealth : MonoBehaviour
 {
     public int maxHealth = 100;
     private int currentHealth;
     public HealthBar healthBar; // Reference to health bar
+    private Animator animator;
+    private bool isDead = false;
 
     void Start()
     {
@@ -18,6 +21,8 @@ public class EnemyHealth : MonoBehaviour
         {
             Debug.LogError($"HealthBar is not assigned for {gameObject.name}!");
         }
+
+        animator = GetComponent<Animator>();
     }
 
     public void TakeDamage(int damage)
@@ -25,7 +30,13 @@ public class EnemyHealth : MonoBehaviour
         if (currentHealth <= 0) return; // Prevent further damage if already dead
 
         currentHealth = Mathf.Clamp(currentHealth - damage, 0, maxHealth);
-        Debug.Log($"{gameObject.name} took {damage} damage. Current health: {currentHealth}");
+         Debug.Log($"{gameObject.name} took {damage} damage. Current health: {currentHealth}");
+      
+        //animator.SetTrigger("HitTrigger");
+        
+        //Debug.Log("hit animation!!!!!!");
+
+
 
         if (healthBar != null)
         {
@@ -40,7 +51,14 @@ public class EnemyHealth : MonoBehaviour
 
     void Die()
     {
-        Debug.Log($"{gameObject.name} has died!");
-        Destroy(gameObject);
+        animator.SetTrigger("DieTrigger");
+        Debug.Log($"{gameObject.name} has died!");      
+        isDead = true;
+        GetComponent<Collider>().enabled = false;
+        GetComponent<NavMeshAgent>().enabled = false;
+
+        // Destroy the enemy
+        Destroy(gameObject, 5.0f);
+
     }
 }
