@@ -4,7 +4,7 @@ using UnityEngine.UI;
 public class DifficultyManager : MonoBehaviour
 {
     public Dropdown difficultyDropdown;
-    private int enemyDamage = 10; //Defaulty difficulty (Medium);
+    private int enemyDamage;
 
     void Start()
     {
@@ -12,18 +12,24 @@ public class DifficultyManager : MonoBehaviour
         if (difficultyDropdown != null)
         {
             difficultyDropdown.onValueChanged.AddListener(OnDifficultyChanged);
-        }
 
-       
-        SetDifficulty(difficultyDropdown.value);
+            // Load saved difficulty or default to Medium (index 1)
+            int savedDifficulty = PlayerPrefs.GetInt("DifficultyIndex", 1);
+            difficultyDropdown.value = savedDifficulty;
+
+            // Apply the saved difficulty
+            SetDifficulty(savedDifficulty);
+        }
     }
 
     void OnDifficultyChanged(int difficultyIndex)
     {
         SetDifficulty(difficultyIndex);
+        PlayerPrefs.SetInt("DifficultyIndex", difficultyIndex); // Save selected difficulty
+        PlayerPrefs.Save(); // Ensure it is stored
     }
 
-    //sets difficulty by enemy's damage
+    // Sets difficulty by enemy's damage
     void SetDifficulty(int difficultyIndex)
     {
         switch (difficultyIndex)
@@ -38,7 +44,9 @@ public class DifficultyManager : MonoBehaviour
                 enemyDamage = 15;
                 break;
         }
+
         PlayerPrefs.SetInt("EnemyDamage", enemyDamage);
+        PlayerPrefs.Save(); // Save enemy damage
         Debug.Log($"Difficulty set to {difficultyDropdown.options[difficultyIndex].text}. Enemy damage: {enemyDamage}");
     }
 

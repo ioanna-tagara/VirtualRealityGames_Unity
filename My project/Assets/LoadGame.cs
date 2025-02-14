@@ -38,4 +38,11 @@ public class LoadGame : MonoBehaviour
         mainMenu.SetActive(true);
     }
 
+    void ShowMenu()
+    {
+        Cursor.lockState = CursorLockMode.None; // Unlocks cursor
+        Cursor.visible = true; // Makes cursor visible
+    }
+
+
 }
