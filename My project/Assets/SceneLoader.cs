@@ -25,6 +25,7 @@ public class SceneLoader : MonoBehaviour
     {
         // Ensure the pause menu is hidden at the start
         pauseMenuUI.SetActive(false);
+        helpScreen.SetActive(false);
 
         // Set up button listeners for the pause menu
         saveButton.onClick.AddListener(Save);
@@ -62,7 +63,15 @@ public class SceneLoader : MonoBehaviour
         {
             bool isActive = helpScreen.activeSelf;
             helpScreen.SetActive(!isActive);
-            Time.timeScale = isActive ? 1 : 0; // Pause when the help screen opens
+            Time.timeScale = isActive ? 1 : 0; // Pause the game when the pause menu opens
+            isPaused = !isActive; // Update pause state
+
+            // Disable or enable the camera and player movement during pause
+            if (playerMovement != null)
+                playerMovement.enabled = !isActive;
+
+            if (cameraController != null)
+                cameraController.enabled = !isActive;
         }
     }
 
