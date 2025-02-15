@@ -10811,6 +10811,7 @@ MonoBehaviour:
   preferencesButton: {fileID: 1525835235}
   continueButton: {fileID: 1425665620}
   quitButton: {fileID: 1129593888}
+  player: {fileID: 4416926083157321369}
   helpScreen: {fileID: 966443969}
   playerMovement: {fileID: 386450632}
   cameraController: {fileID: 1096715093}

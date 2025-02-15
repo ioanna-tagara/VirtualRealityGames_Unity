@@ -14,15 +14,18 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/OldMainScene.unity
     guid: ccec2e82400397c46aa0cf358be150c3
-  - enabled: 0
-    path: Assets/Scenes/SettingsMenu.unity
-    guid: b1b35c21dc252f44e9c5dd42bc927e55
   - enabled: 1
     path: Assets/Scenes/MainMenu.unity
     guid: c5135f4eaecf8a44e9f9e2aa0c01baea
   - enabled: 1
     path: Assets/Scenes/MainScene.unity
     guid: 0752bb53398f635488b77837fbe2da42
+  - enabled: 0
+    path: Assets/Scenes/SettingsMenu2.unity
+    guid: b1b35c21dc252f44e9c5dd42bc927e55
+  - enabled: 1
+    path: Assets/Scenes/SettingsMenu.unity
+    guid: ad95d43719b9b2448a5efe6fbd23456d
   m_configObjects:
     com.unity.input.settings: {fileID: 11400000, guid: 9e7be553448fa2546aea5752021cbcf7, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
